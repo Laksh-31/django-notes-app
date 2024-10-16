@@ -1,6 +1,6 @@
 version: "3.3"
 services :
   web :
-     image: "laksh31/notes-appt"
+     image: "laksh31/notes-app"
      ports :
          - "8000:8000"
