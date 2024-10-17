@@ -1,44 +1,72 @@
-@Library("Shared") _
-pipeline{
+@Library('Shared') _
+
+pipeline {
+    agent { label "Lakshay" }
     
-    agent { label "vinod"}
-    
-    stages{
+    stages {
+        stage("Install Docker Compose") {
+            steps {
+                sh """
+                sudo apt-get update
+                sudo apt-get install -y curl
+                sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+                """
+            }
+        }
         
-        stage("Hello"){
-            steps{
-                script{
-                    hello()
+        stage("Verify Docker Compose") {
+            steps {
+                sh "docker-compose --version"
+            }
+        }
+        
+        stage("Hello") {
+            steps {
+                script {
+                    hello() // Ensure 'hello()' is defined in your shared library
                 }
             }
         }
-        stage("Code"){
-            steps{
-               script{
-                clone("https://github.com/LondheShubham153/django-notes-app.git","main")
-               }
-                
-            }
-        }
-        stage("Build"){
-            steps{
-                script{
-                docker_build("notes-app","latest","trainwithshubham")
+        
+        stage("Clone Repository") {
+            steps {
+                script {
+                    clone("https://github.com/Laksh-31/django-notes-app.git", "main") // Ensure 'clone()' is defined
                 }
             }
         }
-        stage("Push to DockerHub"){
-            steps{
-                script{
-                    docker_push("notes-app","latest","trainwithshubham")
+
+        stage("Build Docker Image") {
+            steps {
+                script {
+                    dockerbuild("notes-app", "latest", "laksh31") // Ensure 'dockerbuild()' is defined
                 }
             }
         }
-        stage("Deploy"){
-            steps{
-                echo "This is deploying the code"
-                sh "docker compose down && docker compose up -d"
+
+        stage("Push to DockerHub") {
+            steps {
+                script {
+                    dockerpush("notes-app", "latest", "laksh31") // Ensure 'dockerpush()' is defined
+                }
             }
+        }
+
+        stage("Deploy") {
+            steps {
+                echo "Deploying the Docker containers using Docker Compose"
+                sh "docker-compose up -d"
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline completed.'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
